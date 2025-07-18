@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { UsbDevice } from './types';
-import { SAMPLE_LOG } from './constants';
 import { parseUsbLog } from './services/parser';
 import LogInput from './components/LogInput';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -11,11 +10,13 @@ const App: React.FC = () => {
   const [devices, setDevices] = useState<UsbDevice[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedParse, setHasAttemptedParse] = useState<boolean>(false);
 
   const handleParse = useCallback(() => {
     setIsLoading(true);
     setError(null);
     setDevices([]);
+    setHasAttemptedParse(true);
 
     setTimeout(() => {
         try {
@@ -34,12 +35,31 @@ const App: React.FC = () => {
     setLogText('');
     setDevices([]);
     setError(null);
+    setHasAttemptedParse(false);
   }, []);
   
-  const handleLoadSample = useCallback(() => {
-    setLogText(SAMPLE_LOG);
-    setError(null);
-  }, []);
+  const handleFileLoad = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.log,.txt,text/plain';
+    input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (readEvent) => {
+                const content = readEvent.target?.result;
+                if (typeof content === 'string') {
+                    setLogText(content);
+                    setDevices([]);
+                    setError(null);
+                    setHasAttemptedParse(false);
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+}, []);
 
 
   return (
@@ -53,7 +73,7 @@ const App: React.FC = () => {
             </h1>
           </div>
           <p className="mt-4 text-lg text-gray-600">
-            Paste your log file to display Hub and HID device information.
+            Load your log file or paste its content to display Hub and HID device information.
           </p>
         </header>
 
@@ -63,14 +83,14 @@ const App: React.FC = () => {
             onLogChange={setLogText}
             onParse={handleParse}
             onClear={handleClear}
-            onLoadSample={handleLoadSample}
+            onLoadLog={handleFileLoad}
             isLoading={isLoading}
           />
           <ResultsDisplay 
             devices={devices} 
             isLoading={isLoading} 
             error={error} 
-            hasAttemptedParse={devices.length > 0 || error !== null || isLoading}
+            hasAttemptedParse={hasAttemptedParse}
           />
         </main>
         
