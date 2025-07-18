@@ -1,0 +1,5 @@
+{
+  "name": "USBView Log Parser",
+  "description": "An application to parse USBView log files and display information about Hubs and HID (Human Interface Devices) in a clean, user-friendly format.",
+  "requestFramePermissions": []
+}
